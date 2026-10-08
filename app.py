@@ -62,7 +62,7 @@ with st.sidebar:
     else:
         st.warning("Ingresa tu API Key para habilitar la plataforma.")
 
-    st.divider()
+    st.markdown("---")
     st.caption(f"Versión de Python: {platform.python_version()}")
 
 # 3. Encabezado principal tipo Banner
