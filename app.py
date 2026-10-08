@@ -1,149 +1,143 @@
 import os
-import platform
+import streamlit as st
 from PIL import Image
 from PyPDF2 import PdfReader
-import streamlit as st
-
-# Imports actualizados para compatibilidad total con LangChain
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_openai import ChatOpenAI
-from langchain_text_splitters import CharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
+import platform
 
-# 1. Configuración de la página
+# 1. Configuración de página con layout ancho
 st.set_page_config(
-    page_title="Smart Audit RAG - Auditoría Financiera",
-    page_icon="🔍",
-    layout="wide"
+    page_title="AuditIntel AI - Análisis Contable",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Estilo CSS para interfaz oscura con contraste
+# Estilos CSS personalizados para emular la interfaz de la imagen
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #0E1117;
-        color: #E6E6E6;
-    }
-    .metric-card {
-        background-color: #161B22;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #30363D;
-        margin-top: 15px;
-    }
-    .badge-tag {
-        background-color: #238636;
+    .banner-container {
+        background: linear-gradient(90deg, #1E1035 0%, #321B63 50%, #22336E 100%);
+        padding: 30px;
+        border-radius: 15px;
         color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
+        margin-bottom: 25px;
+    }
+    .banner-title {
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .banner-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Encabezado
-col_title, col_logo = st.columns([3, 1])
-
-with col_title:
-    st.markdown('<span class="badge-tag">Auditoría & Análisis Contable</span>', unsafe_allow_html=True)
-    st.title("🛡️ Smart Audit RAG")
-    st.write("Análisis automatizado de informes financieros, dictámenes de auditoría, balances generales y cumplimiento fiscal.")
-
-with col_logo:
+# 2. Barra Lateral (Sidebar)
+with st.sidebar:
+    # Cargar imagen de perfil/bot si existe
     try:
         image = Image.open('Chat_pdf.png')
-        st.image(image, width=150)
+        st.image(image, use_column_width=True)
     except Exception:
         pass
 
-st.markdown("---")
+    st.markdown("### 🎯 AuditIntel AI")
+    st.caption("Asistente RAG especializado en auditoría financiera, balances, estados de resultados y cumplimiento tributario.")
 
-# 3. Sidebar (Autenticación)
-with st.sidebar:
-    st.header("⚙️ Autenticación")
-    ke = st.text_input('Clave API de OpenAI', type="password", placeholder="sk-...")
-    
-    st.markdown("---")
-    st.subheader("📌 Instrucciones")
-    st.markdown("""
-    1. Ingresa tu API Key.
-    2. Carga un reporte contable o financiero en PDF.
-    3. Formula tus preguntas sobre salvedades, impuestos o ratios.
-    """)
-    st.caption(f"Python v{platform.python_version()}")
+    st.divider()
 
-if ke:
-    os.environ['OPENAI_API_KEY'] = ke
+    st.markdown("### 🔑 Autenticación")
+    ke = st.text_input('Clave de API de OpenAI', type="password", placeholder="sk-...")
 
-# 4. Disposición en dos columnas principales
-col_left, col_right = st.columns([1, 1], gap="large")
-
-with col_left:
-    st.subheader("📄 1. Cargar Documento Financiero")
-    pdf = st.file_uploader("Sube el PDF de auditoría o balance aquí", type="pdf")
-    
-    st.markdown("---")
-    st.subheader("💡 Ejemplos de Consultas")
-    st.info("""
-    • ¿Cuáles son las salvedades o riesgos señalados por el auditor?
-    • Resume los ingresos netos, la utilidad bruta y el EBITDA.
-    • ¿Se detallan pasivos contingentes o litigios tributarios?
-    • Identifica las principales variaciones en el activo corriente.
-    """)
-
-with col_right:
-    st.subheader("🔍 2. Panel de Análisis")
-    
-    if not ke:
-        st.warning("🔑 Ingresa tu API Key de OpenAI en la barra lateral para desbloquear el análisis.")
-    elif pdf is None:
-        st.info("👈 Sube un archivo PDF contable desde el panel izquierdo para comenzar.")
+    if ke:
+        os.environ['OPENAI_API_KEY'] = ke
+        st.success("API Key cargada correctamente")
     else:
-        try:
-            # Lectura del texto del PDF
-            pdf_reader = PdfReader(pdf)
-            text = ""
-            for page in pdf_reader.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    text += extracted
-            
-            st.success(f" Documento procesado correctamente ({len(text)} caracteres).")
+        st.warning("Ingresa tu API Key para habilitar la plataforma.")
 
-            # Fragmentación del texto
-            text_splitter = CharacterTextSplitter(
-                separator="\n",
-                chunk_size=600,
-                chunk_overlap=50,
-                length_function=len
-            )
-            chunks = text_splitter.split_text(text)
+    st.divider()
+    st.caption(f"Versión de Python: {platform.python_version()}")
 
-            # Base vectorial con FAISS y Embeddings
-            embeddings = OpenAIEmbeddings()
-            knowledge_base = FAISS.from_texts(chunks, embeddings)
+# 3. Encabezado principal tipo Banner
+st.markdown("""
+    <div class="banner-container">
+        <div class="banner-title">Análisis de Auditoría & Estados Financieros 📊</div>
+        <div class="banner-subtitle">Carga dictámenes, balances generales o informes de auditoría en PDF para extraer hallazgos clave en segundos.</div>
+    </div>
+""", unsafe_allow_html=True)
 
-            # Campo de consulta del usuario
-            user_question = st.text_area(
-                "Consulta sobre el informe contable:",
-                placeholder="Ejemplo: Resume las principales notas a los estados financieros...",
-                height=100
-            )
+# 4. Sección superior dividida en dos columnas
+col_upload, col_examples = st.columns([1, 1], gap="large")
 
-            if user_question:
-                with st.spinner("Analizando hallazgos financieros..."):
-                    docs = knowledge_base.similarity_search(user_question)
-                    
-                    # LLM actualizado llamando desde langchain_openai
-                    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
-                    chain = load_qa_chain(llm, chain_type="stuff")
-                    
-                    response = chain.run(input_documents=docs, question=user_question)
+with col_upload:
+    st.markdown("### 📁 Cargar Documento Financiero")
+    st.caption("Selecciona un informe contable, auditoría o balance (PDF)")
+    pdf = st.file_uploader("Subir PDF", type="pdf", label_visibility="collapsed")
 
-                    st.markdown("### 📊 Hallazgos de la Auditoría:")
-                    st.markdown(f'<div class="metric-card">{response}</div>', unsafe_allow_html=True)
+with col_examples:
+    st.markdown("### 💡 Ejemplos de Consultas")
+    st.markdown("""
+    * *"¿Cuáles son los hallazgos o salvedades principales expresados en el dictamen?"*
+    * *"Resume los ingresos netos, costos y la utilidad operacional del periodo."*
+    * *"¿Se mencionan pasivos contingentes o riesgos fiscales significativos?"*
+    * *"Identifica las principales variaciones en el activo corriente respecto al periodo anterior."*
+    """)
 
-        except Exception as e:
-            st.error(f"Error al procesar el archivo: {str(e)}")
+st.divider()
+
+# 5. Flujo de procesamiento RAG
+if pdf is not None and ke:
+    try:
+        # Extraer texto
+        pdf_reader = PdfReader(pdf)
+        text = ""
+        for page in pdf_reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted
+
+        # Chunking
+        text_splitter = CharacterTextSplitter(
+            separator="\n",
+            chunk_size=600,
+            chunk_overlap=50,
+            length_function=len
+        )
+        chunks = text_splitter.split_text(text)
+
+        # Base de Conocimiento (FAISS)
+        embeddings = OpenAIEmbeddings()
+        knowledge_base = FAISS.from_texts(chunks, embeddings)
+
+        st.markdown("### 💬 Área de Consulta Financiera")
+        user_question = st.text_input("Haz una pregunta sobre el documento auditado:", placeholder="Ej. ¿Cuál es el margen de utilidad operativa?")
+
+        if user_question:
+            with st.spinner("Analizando fuentes y generando respuesta contable..."):
+                docs = knowledge_base.similarity_search(user_question)
+                
+                # Modelo ChatOpenAI actualizado
+                llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+                chain = load_qa_chain(llm, chain_type="stuff")
+                
+                response = chain.run(input_documents=docs, question=user_question)
+
+                st.markdown("#### 📝 Hallazgos Extraídos:")
+                st.info(response)
+
+    except Exception as e:
+        st.error(f"Error procesando el informe: {str(e)}")
+
+elif pdf is None and ke:
+    st.info("👋 Para comenzar, carga un archivo PDF de auditoría o finanzas desde el panel superior.")
+elif pdf is not None and not ke:
+    st.warning("⚠️ Por favor ingresa tu API Key en la barra lateral para procesar el documento.")
+else:
+    st.info("👋 Por favor ingresa tu API Key e ingresa un archivo PDF para empezar.")
