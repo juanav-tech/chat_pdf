@@ -51,7 +51,7 @@ with st.sidebar:
     st.markdown("### 🎯 AuditIntel AI")
     st.caption("Asistente RAG especializado en auditoría financiera, balances, estados de resultados y cumplimiento tributario.")
 
-    st.divider()
+    st.markdown("---")
 
     st.markdown("### 🔑 Autenticación")
     ke = st.text_input('Clave de API de OpenAI', type="password", placeholder="sk-...")
