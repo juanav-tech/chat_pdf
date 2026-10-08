@@ -51,7 +51,7 @@ with st.sidebar:
     st.markdown("### 🎯 AuditIntel AI")
     st.caption("Asistente RAG especializado en auditoría financiera, balances, estados de resultados y cumplimiento tributario.")
 
-    st.markdown("---")
+    st.divider()
 
     st.markdown("### 🔑 Autenticación")
     ke = st.text_input('Clave de API de OpenAI', type="password", placeholder="sk-...")
@@ -62,7 +62,7 @@ with st.sidebar:
     else:
         st.warning("Ingresa tu API Key para habilitar la plataforma.")
 
-    st.markdown("---")
+    st.divider()
     st.caption(f"Versión de Python: {platform.python_version()}")
 
 # 3. Encabezado principal tipo Banner
