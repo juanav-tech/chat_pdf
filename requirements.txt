@@ -1,9 +1,7 @@
 streamlit>=1.28.0
 langchain
 langchain-community
-langchain-openai
-langchain-text-splitters
 openai
 faiss-cpu
-PyPDF2
-Pillow
+pypdf2
+pillow
