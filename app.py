@@ -1,92 +1,166 @@
 import os
-import streamlit as st
+import platform
 from PIL import Image
 from PyPDF2 import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.llms import OpenAI
+import streamlit as st
+
+# Imports modernos y compatibles
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_text_splitters import CharacterTextSplitter
 from langchain.chains.question_answering import load_qa_chain
-import platform
 
-# App title and presentation
-st.title('Generación Aumentada por Recuperación (RAG) 💬')
-st.write("Versión de Python:", platform.python_version())
+# Configuración de la página
+st.set_page_config(
+    page_title="Smart Audit RAG - Análisis Financiero",
+    page_icon="📈",
+    layout="wide"
+)
 
-# Load and display image
-try:
-    image = Image.open('Chat_pdf.png')
-    st.image(image, width=350)
-except Exception as e:
-    st.warning(f"No se pudo cargar la imagen: {e}")
+# Estilo CSS personalizado: Layout rediseñado, colores corporativos y financieros
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0B132B;
+        color: #E0E1DD;
+    }
+    .financial-banner {
+        background: linear-gradient(135deg, #1C2541 0%, #3A506B 100%);
+        padding: 25px 30px;
+        border-radius: 14px;
+        border-left: 6px solid #4CC9F0;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .banner-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #FFFFFF;
+        margin-bottom: 6px;
+    }
+    .banner-subtitle {
+        font-size: 14px;
+        color: #8D99AE;
+    }
+    .metric-card {
+        background-color: #1C2541;
+        padding: 22px;
+        border-radius: 12px;
+        border: 1px solid #48CAE4;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .badge-tag {
+        background-color: #4CC9F0;
+        color: #0B132B;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-# Sidebar information
+# Banner de Encabezado Superior Profesional
+col_title, col_logo = st.columns([4, 1], vertical_alignment="center")
+
+with col_title:
+    st.markdown("""
+        <div class="financial-banner">
+            <span class="badge-tag">Inteligencia Financiera & Auditoría</span>
+            <div class="banner-title">🛡️ Smart Audit RAG - Análisis Financiero</div>
+            <div class="banner-subtitle">Plataforma avanzada para la extracción de métricas, estados de resultados, balances y auditoría contable en documentos PDF.</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+with col_logo:
+    try:
+        image = Image.open('Chat_pdf.png')
+        st.image(image, width=140)
+    except Exception:
+        pass
+
+# Sidebar rediseñado
 with st.sidebar:
-    st.subheader("Este Agente te ayudará a realizar análisis sobre el PDF cargado")
+    st.header("⚙️ Configuración")
+    ke = st.text_input('Clave API de OpenAI', type="password", placeholder="sk-...")
+    
+    st.markdown("---")
+    st.subheader("📌 Guía de Uso")
+    st.markdown("""
+    1. Ingresa tu API Key.
+    2. Carga un reporte o balance contable en PDF.
+    3. Realiza preguntas sobre salvedades, impuestos o ratios.
+    """)
+    st.caption(f"Python v{platform.python_version()}")
 
-# Get API key from user
-ke = st.text_input('Ingresa tu Clave de OpenAI', type="password")
 if ke:
     os.environ['OPENAI_API_KEY'] = ke
-else:
-    st.warning("Por favor ingresa tu clave de API de OpenAI para continuar")
 
-# PDF uploader
-pdf = st.file_uploader("Carga el archivo PDF", type="pdf")
+# Estructura principal en dos columnas limpias
+col_left, col_right = st.columns([1, 1], gap="large")
 
-# Process the PDF if uploaded
-if pdf is not None and ke:
-    try:
-        # Extract text from PDF
-        pdf_reader = PdfReader(pdf)
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-        
-        st.info(f"Texto extraído: {len(text)} caracteres")
-        
-        # Split text into chunks
-        text_splitter = CharacterTextSplitter(
-            separator="\n",
-            chunk_size=500,
-            chunk_overlap=20,
-            length_function=len
-        )
-        chunks = text_splitter.split_text(text)
-        st.success(f"Documento dividido en {len(chunks)} fragmentos")
-        
-        # Create embeddings and knowledge base
-        embeddings = OpenAIEmbeddings()
-        knowledge_base = FAISS.from_texts(chunks, embeddings)
-        
-        # User question interface
-        st.subheader("Escribe qué quieres saber sobre el documento")
-        user_question = st.text_area(" ", placeholder="Escribe tu pregunta aquí...")
-        
-        # Process question when submitted
-        if user_question:
-            docs = knowledge_base.similarity_search(user_question)
+with col_left:
+    st.subheader("📄 1. Cargar Documento PDF")
+    pdf = st.file_uploader("Arrastra tu informe financiero aquí", type="pdf")
+    
+    st.markdown("---")
+    st.subheader("💡 Consultas Sugeridas para Auditoría")
+    st.info("""
+    • ¿Cuáles son las salvedades expuestas en el dictamen del auditor?
+    • Resume el margen bruto, la utilidad operativa y el EBITDA.
+    • ¿Se identifican pasivos contingentes o litigios pendientes?
+    • ¿Qué riesgos fiscales o de liquidez señala el documento?
+    """)
+
+with col_right:
+    st.subheader("🔍 2. Panel de Consulta")
+    
+    if not ke:
+        st.warning("🔑 Ingresa tu API Key de OpenAI en el menú lateral para desbloquear el análisis.")
+    elif pdf is None:
+        st.info("👈 Sube un archivo PDF contable desde el panel izquierdo para comenzar.")
+    else:
+        try:
+            pdf_reader = PdfReader(pdf)
+            text = ""
+            for page in pdf_reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted
             
-            # Use a current model instead of deprecated text-davinci-003
-            # Options: "gpt-3.5-turbo-instruct" or "gpt-4o" depending on your API access
-            llm = OpenAI(temperature=0, model_name="gpt-4o-mini-2024-07-18")
-            
-            # Load QA chain
-            chain = load_qa_chain(llm, chain_type="stuff")
-            
-            # Run the chain
-            response = chain.run(input_documents=docs, question=user_question)
-            
-            # Display the response
-            st.markdown("### Respuesta:")
-            st.markdown(response)
-                
-    except Exception as e:
-        st.error(f"Error al procesar el PDF: {str(e)}")
-        # Add detailed error for debugging
-        import traceback
-        st.error(traceback.format_exc())
-elif pdf is not None and not ke:
-    st.warning("Por favor ingresa tu clave de API de OpenAI para continuar")
-else:
-    st.info("Por favor carga un archivo PDF para comenzar")
+            st.success(f"Documento leído con éxito ({len(text)} caracteres).")
+
+            # Separador usando la nueva librería langchain_text_splitters
+            text_splitter = CharacterTextSplitter(
+                separator="\n",
+                chunk_size=600,
+                chunk_overlap=50,
+                length_function=len
+            )
+            chunks = text_splitter.split_text(text)
+
+            embeddings = OpenAIEmbeddings()
+            knowledge_base = FAISS.from_texts(chunks, embeddings)
+
+            user_question = st.text_area(
+                "Pregunta sobre el documento auditado:",
+                placeholder="Ejemplo: Realiza un resumen del estado de pérdidas y ganancias...",
+                height=100
+            )
+
+            if user_question:
+                with st.spinner("Analizando hallazgos financieros..."):
+                    docs = knowledge_base.similarity_search(user_question)
+                    
+                    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+                    chain = load_qa_chain(llm, chain_type="stuff")
+                    
+                    response = chain.run(input_documents=docs, question=user_question)
+
+                    st.markdown("### 📊 Resultado de la Auditoría:")
+                    st.markdown(f'<div class="metric-card">{response}</div>', unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Error procesando el PDF: {str(e)}")
